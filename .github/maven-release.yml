@@ -1,0 +1,37 @@
+name: Maven Package Release (F2)
+
+on:
+  push:
+    branches:
+      - main # Trigger on push to the main branch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          # Set up server-id for MAVEN settings.xml, needed for GitHub Packages authentication
+          server-id: github 
+          settings-path: ${{ github.workspace }} # Location where Maven settings.xml will be placed
+
+      - name: Configure GitHub Package Registry Auth
+        run: echo "Maven authentication configured."
+
+      - name: Publish Package to GitHub Registry
+        run: |
+          # Use mvn deploy to build, package, and deploy the artifact 
+          # to the repository defined in pom.xml's <distributionManagement>
+          mvn deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
