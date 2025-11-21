@@ -19,7 +19,6 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
           server-id: github
-          settings-path: ${{ github.workspace }}
 
       - name: Configure Git User
         run: |
