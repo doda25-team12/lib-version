@@ -20,8 +20,7 @@ jobs:
         with:
           java-version: '25'
           distribution: 'temurin'
-          server-id: github # Matches <id>github</id> in pom.xml
-          settings-path: ${{ github.workspace }}
+          server-id: github 
 
       - name: Calculate Pre-release Version
         id: vars
