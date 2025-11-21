@@ -1,0 +1,52 @@
+name: Branch Pre-Release
+
+on:
+  push:
+    branches-ignore:
+      - 'main' # Don't run this logic on main
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Required to publish to GitHub Packages
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          server-id: github 
+
+      - name: Calculate Pre-release Version
+        id: vars
+        run: |
+          # Get the base version from POM (e.g., 1.0.0-SNAPSHOT)
+          BASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+          
+          # Strip -SNAPSHOT (e.g., 1.0.0)
+          CLEAN_VERSION=${BASE_VERSION%-SNAPSHOT}
+          
+          # Get Branch Name (sanitize slashes to hyphens)
+          BRANCH_NAME=${GITHUB_REF_NAME//\//-}
+          
+          # Get Timestamp (YYMMDD-HHMMSS)
+          TIMESTAMP=$(date +%y%m%d-%H%M%S)
+          
+          # Construct New Version (1.0.0-branch-timestamp)
+          NEW_VERSION="${CLEAN_VERSION}-${BRANCH_NAME}-${TIMESTAMP}"
+          
+          echo "New version will be: $NEW_VERSION"
+          echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
+
+      - name: Set Version
+        run: mvn versions:set -DnewVersion=${{ env.new_version }}
+
+      - name: Publish to GitHub Packages
+        run: mvn deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Auth for server-id 'github'
